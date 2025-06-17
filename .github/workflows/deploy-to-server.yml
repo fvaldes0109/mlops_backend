@@ -19,18 +19,14 @@ jobs:
           echo "${{ secrets.SSH_KNOWN_HOSTS }}" > known_hosts
           chmod 600 known_hosts
 
-          # Setup askpass script for passphrase
           echo '#!/bin/sh' > askpass.sh
           echo 'echo "${{ secrets.SSH_KEY_PASSPHRASE }}"' >> askpass.sh
           chmod +x askpass.sh
-
-          # Start ssh-agent and add key
           export DISPLAY=:0
           export SSH_ASKPASS=$PWD/askpass.sh
           eval "$(ssh-agent -s)"
           ssh-add id_rsa
 
-          # Save SSH_AUTH_SOCK for next steps
           echo "SSH_AUTH_SOCK=$SSH_AUTH_SOCK" >> $GITHUB_ENV
         env:
           SSH_KEY_PASSPHRASE: ${{ secrets.SSH_KEY_PASSPHRASE }}
@@ -51,10 +47,8 @@ jobs:
 
       - name: Run deployment script on server
         run: |
-          # Make the deployment script executable
           ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=known_hosts -i id_rsa "${DEPLOY_USER}@${DEPLOY_HOST}" "chmod +x ${DEPLOY_PATH}/deploy.sh"
           
-          # Execute the deployment script
           ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=known_hosts -i id_rsa "${DEPLOY_USER}@${DEPLOY_HOST} "${DEPLOY_PATH}/deploy.sh""
         env:
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
