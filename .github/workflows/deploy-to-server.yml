@@ -16,6 +16,7 @@ jobs:
         with:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           known_hosts: ${{ secrets.SSH_KNOWN_HOSTS }}
+          passphrase: ${{ secrets.SSH_KEY_PASSPHRASE }}
           
       - name: Deploy to server
         run: |
