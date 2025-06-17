@@ -37,7 +37,12 @@ jobs:
 
       - name: Deploy using rsync
         run: |
-          rsync -az --delete -e "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=known_hosts -i id_rsa" ./ "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}"
+          rsync -az --delete \
+            --exclude=id_rsa \
+            --exclude=askpass.sh \
+            --exclude=known_hosts \
+            -e "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=known_hosts -i id_rsa" \
+            ./ "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}"
         env:
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
