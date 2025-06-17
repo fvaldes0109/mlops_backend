@@ -33,6 +33,6 @@ pkill -f "gunicorn.*:4742" || true
 
 # Start the server in the background
 echo "Starting server..."
-nohup gunicorn -b :4742 --timeout 120 -w 4 app:app > server.log 2>&1 &
+nohup gunicorn -b :4742 --timeout 120 -w 4 main:app > server.log 2>&1 &
 
 echo "Deployment completed successfully!"
