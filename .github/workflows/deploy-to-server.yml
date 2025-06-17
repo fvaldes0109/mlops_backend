@@ -41,8 +41,21 @@ jobs:
             --exclude=id_rsa \
             --exclude=askpass.sh \
             --exclude=known_hosts \
+            --exclude=.venv \
             -e "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=known_hosts -i id_rsa" \
             ./ "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}"
+        env:
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+
+      - name: Run deployment script on server
+        run: |
+          # Make the deployment script executable
+          ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=known_hosts -i id_rsa "${DEPLOY_USER}@${DEPLOY_HOST}" "chmod +x ${DEPLOY_PATH}/deploy.sh"
+          
+          # Execute the deployment script
+          ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=known_hosts -i id_rsa "${DEPLOY_USER}@${DEPLOY_HOST} "${DEPLOY_PATH}/deploy.sh""
         env:
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
