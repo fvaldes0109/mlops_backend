@@ -7,42 +7,38 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up SSH key
+      - name: Set up SSH key and known hosts
         run: |
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" | base64 --decode > /tmp/id_rsa
-          chmod 600 /tmp/id_rsa
-          echo "${{ secrets.SSH_KNOWN_HOSTS }}" > /tmp/known_hosts
-          chmod 600 /tmp/known_hosts
-        env:
-          SSH_AUTH_SOCK: /tmp/ssh-agent.sock
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" | base64 --decode > id_rsa
+          chmod 600 id_rsa
+          echo "${{ secrets.SSH_KNOWN_HOSTS }}" > known_hosts
+          chmod 600 known_hosts
 
-      - name: Start SSH agent
-        run: |
-          # Create a script to handle the passphrase
-          echo '#!/bin/sh' > /tmp/ssh-askpass
-          echo 'echo "${{ secrets.SSH_KEY_PASSPHRASE }}"' >> /tmp/ssh-askpass
-          chmod +x /tmp/ssh-askpass
-          
-          # Set environment variables
-          export SSH_ASKPASS=/tmp/ssh-askpass
+          # Setup askpass script for passphrase
+          echo '#!/bin/sh' > askpass.sh
+          echo 'echo "${{ secrets.SSH_KEY_PASSPHRASE }}"' >> askpass.sh
+          chmod +x askpass.sh
+
+          # Start ssh-agent and add key
           export DISPLAY=:0
-          
-          # Start SSH agent and add key
+          export SSH_ASKPASS=$PWD/askpass.sh
           eval "$(ssh-agent -s)"
-          ssh-add /tmp/id_rsa
-          ssh-add -l
+          ssh-add id_rsa
+
+          # Save SSH_AUTH_SOCK for next steps
+          echo "SSH_AUTH_SOCK=$SSH_AUTH_SOCK" >> $GITHUB_ENV
         env:
           SSH_KEY_PASSPHRASE: ${{ secrets.SSH_KEY_PASSPHRASE }}
 
-      - name: Deploy to server
+      - name: Deploy using rsync
         run: |
-          scp -r . ${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}
+          rsync -az --delete -e "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=known_hosts -i id_rsa" ./ "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}"
         env:
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
-          SSH_AUTH_SOCK: /tmp/ssh-agent.sock
