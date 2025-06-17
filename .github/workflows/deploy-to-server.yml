@@ -48,8 +48,7 @@ jobs:
       - name: Run deployment script on server
         run: |
           ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=known_hosts -i id_rsa "${DEPLOY_USER}@${DEPLOY_HOST}" "chmod +x ${DEPLOY_PATH}/deploy.sh"
-          
-          ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=known_hosts -i id_rsa "${DEPLOY_USER}@${DEPLOY_HOST} "${DEPLOY_PATH}/deploy.sh""
+          ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=known_hosts -i id_rsa "${DEPLOY_USER}@${DEPLOY_HOST}" "${DEPLOY_PATH}/deploy.sh"
         env:
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
