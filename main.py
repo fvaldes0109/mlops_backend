@@ -4,10 +4,11 @@ from fastapi.staticfiles import StaticFiles
 from controllers.classifier import predict
 from body_models import CreditInput, Attribute, get_attributes
 from typing import List
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = FastAPI()
-
-
 
 @app.get("/health")
 async def health_check():
