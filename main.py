@@ -6,7 +6,11 @@ from controllers.classifier import predict
 from testaws import invoke_model
 
 app = FastAPI()
-bedrock_runtime = boto3.client('bedrock-runtime', region_name='eu-west-1')
+bedrock_runtime = boto3.client('bedrock-runtime', region_name='us-east-1')
+
+class ChatInput(BaseModel):
+    prompt: str
+    max_token_count: int
 
 class CreditInput(BaseModel):
     Attribute1: str
@@ -35,5 +39,5 @@ async def predict_credit(input_data: CreditInput):
     return predict(input_data)
 
 @app.post("/chat")
-async def chat(prompt: str):
-    return invoke_model(bedrock_runtime, prompt)
+async def chat(input_data: ChatInput):
+    return invoke_model(bedrock_runtime, input_data.prompt, input_data.max_token_count)
