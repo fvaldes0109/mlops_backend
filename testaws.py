@@ -1,14 +1,9 @@
-import boto3
+def invoke_model(bedrock_runtime, prompt: str) -> str:
+    response = bedrock_runtime.invoke_model(
+        modelId='anthropic.claude-v2',
+        body=b'{"prompt": "' + prompt + '", "max_tokens_to_sample": 100}',
+        contentType='application/json',
+        accept='application/json'
+    )
 
-# Create a Bedrock runtime client
-bedrock_runtime = boto3.client('bedrock-runtime', region_name='eu-west-1')
-
-# Example: Invoke Claude model from Anthropic
-response = bedrock_runtime.invoke_model(
-    modelId='anthropic.claude-v2',
-    body=b'{"prompt": "Hello, Claude!", "max_tokens_to_sample": 100}',
-    contentType='application/json',
-    accept='application/json'
-)
-
-print(response['body'].read().decode())
+    return response['body'].read().decode()

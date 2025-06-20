@@ -1,12 +1,12 @@
+import boto3
 from fastapi import FastAPI
 from pydantic import BaseModel
-import joblib
 
-from controllers.update_classifier_model import update_classifier_model
 from controllers.classifier import predict
+from testaws import invoke_model
 
 app = FastAPI()
-model = joblib.load("models/credit_xgb_model.pkl")
+bedrock_runtime = boto3.client('bedrock-runtime', region_name='eu-west-1')
 
 class CreditInput(BaseModel):
     Attribute1: str
@@ -30,11 +30,10 @@ class CreditInput(BaseModel):
     Attribute19: str
     Attribute20: str
 
-@app.post("/pull-classifier")
-def pull_classifier():
-    update_classifier_model()
-
 @app.post("/predict")
 async def predict_credit(input_data: CreditInput):
-    return predict(model, input_data)
-    
+    return predict(input_data)
+
+@app.post("/chat")
+async def chat(prompt: str):
+    return invoke_model(bedrock_runtime, prompt)
