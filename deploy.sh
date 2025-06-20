@@ -27,12 +27,12 @@ if ! command -v gunicorn &> /dev/null; then
     pip install gunicorn
 fi
 
-# Kill any existing server running on port 4742
-echo "Stopping any existing server on port 4742..."
-pkill -f "gunicorn.*:4742" || true
+# Kill any existing server running on port 47424
+echo "Stopping any existing server on port 47424..."
+pkill -f "gunicorn.*:47424" || true
 
 # Start the server in the background
 echo "Starting server..."
-nohup gunicorn -b :4742 --timeout 120 -w 4 main:app > server.log 2>&1 &
+nohup gunicorn -b :47424 --timeout 120 -w 4 main:app > server.log 2>&1 &
 
 echo "Deployment completed successfully!"
