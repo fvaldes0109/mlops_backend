@@ -1,7 +1,7 @@
 import boto3
 
 # Create a Bedrock runtime client
-bedrock_runtime = boto3.client('bedrock-runtime', region_name='us-east-1')
+bedrock_runtime = boto3.client('bedrock-runtime', region_name='eu-west-1')
 
 # Example: Invoke Claude model from Anthropic
 response = bedrock_runtime.invoke_model(
