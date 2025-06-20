@@ -12,7 +12,7 @@ def create_tf_serving_json(data):
 
 # Core scoring logic
 def score_model(dataset: pd.DataFrame):
-    url = 'https://dbc-500e84ee-bd2a.cloud.databricks.com/serving-endpoints/endpoint-1/invocations'
+    url = os.environ.get('DATABRICKS_ENDPOINT')
     headers = {
         'Authorization': f'Bearer {os.environ.get("DATABRICKS_TOKEN")}',
         'Content-Type': 'application/json'
@@ -28,10 +28,25 @@ def score_model(dataset: pd.DataFrame):
     return response.json()
 
 def predict(input_data):
-    
-    veredict = random.choice(['approved', 'rejected'])
-    confidence = random.uniform(0.5, 1.0)
 
+    df = pd.DataFrame([input_data.dict()])
+    
+    # Encode categorical string attributes to numeric integer codes expected by the ML model
+    for idx, attr_meta in enumerate(ATTRIBUTES_LIST, start=1):
+        col = f'Attribute{idx}'
+        if col not in df.columns:
+            continue
+        if attr_meta.values:
+            # Create a stable mapping from the identifier (e.g. 'A11') to a zero-based integer code
+            id_to_code = {val.identifier: code for code, val in enumerate(attr_meta.values)}
+            df[col] = df[col].map(id_to_code).fillna(-1).astype(int)
+        else:
+            # Ensure numerical attributes are stored as numbers (handling possible string inputs)
+            df[col] = pd.to_numeric(df[col], errors='coerce')
+    
+    result = score_model(df)
+    veredict = 'Approved' if result['predictions'][0] == 1 else 'Rejected'
+    
     # Map Attribute1..Attribute20 to human-readable list
     input_dict = input_data.dict()
     mapped_attributes = []
@@ -53,7 +68,7 @@ def predict(input_data):
                 'value': raw_val
             })
 
-    if veredict == 'rejected':
+    if veredict == 'Rejected':
         llm_context = {
             'mapped_attributes': mapped_attributes
         }
@@ -64,14 +79,5 @@ def predict(input_data):
 
     return {
         'veredict': veredict,
-        'confidence': confidence,
         'llm_output': llm_output
     }
-
-    # df = pd.DataFrame([input_data.dict()])
-
-    # for col in df.select_dtypes(include=['object']).columns:
-    #     df[col] = df[col].astype('category')
-    
-    # result = score_model(df)
-    # return result

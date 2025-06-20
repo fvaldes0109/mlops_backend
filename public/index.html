@@ -120,7 +120,7 @@
         document.getElementById('loading-overlay').style.display = 'none';
 
         document.getElementById('verdict').textContent = data.veredict ?? '';
-        document.getElementById('confidence').textContent = data.confidence ? (data.confidence * 100).toFixed(2) + '%' : '';
+        // document.getElementById('confidence').textContent = data.confidence ? (data.confidence * 100).toFixed(2) + '%' : '';
 
         const llmOutputContainer = document.getElementById('llm-output-container');
         if (data.llm_output) {
@@ -163,7 +163,7 @@
         </div>
         <div class="modal-body">
           <p><strong>Verdict:</strong> <span id="verdict"></span></p>
-          <p><strong>Confidence:</strong> <span id="confidence"></span></p>
+          <!-- <p><strong>Confidence:</strong> <span id="confidence"></span></p> -->
           <div id="llm-output-container">
             <p><strong>LLM Output:</strong> <span id="llm-output"></span></p>
           </div>

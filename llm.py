@@ -3,10 +3,8 @@ import boto3
 
 bedrock_runtime = boto3.client('bedrock-runtime', region_name='us-east-1')
 
-PROMPT = """
-<system>
-You are a credit risk assessor. You will be given information about a rejected credit application of a customer. This application consist of the following attributes:
-- mapped_attributes: The attributes of the credit application mapped to human-readable values.
+PROMPT = """<system>
+You are a credit risk analyst. Use only the provided attributes to assess why the credit application was likely rejected. Do not assume information beyond what is given.
 </system>
 
 <context>
@@ -14,9 +12,12 @@ You are a credit risk assessor. You will be given information about a rejected c
 </context>
 
 <instruction>
-You must provide possible explanations on why the credit application was rejected. The reason for the veredict and advices must be based on the attributes of the credit application and not be too long, just a small paragraph. The advice must be actionable.
-</instruction>
-"""
+Based on the mapped attributes, provide a brief explanation of why the application may have been rejected. Then, offer one clear and actionable piece of advice the applicant can follow to improve their chances of approval.
+
+Respond in this format:
+Reason: <short explanation>
+Advice: <specific recommendation>
+</instruction>"""
 
 def invoke_model(context: dict) -> str:
     payload = {
