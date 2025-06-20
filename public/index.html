@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dynamic Form</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+  <style>
+    #loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1050; /* Above modal backdrop */
+    }
+  
+    .overlay-background {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5); /* Semi-dark background */
+    }
+  
+    .spinner-container {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+  
+    .spinner-xl {
+      width: 4rem;
+      height: 4rem;
+      border-width: 0.4em;
+    }
+  </style>
+  
+  <div class="container mt-5">
+    <h1 class="mb-4">Credit Risk Assessment</h1>
+    <form id="dynamic-form" class="row"></form>
+    <button class="btn btn-primary mt-3" onclick="submitForm()">Submit</button>
+  </div>
+
+  <script>
+    const attributeMap = {};
+
+    function capitalizeWords(str) {
+      return str.replace(/\b\w/g, c => c.toUpperCase());
+    }
+
+    async function fetchAttributes() {
+      try {
+        const response = await fetch('/attributes');
+        const attributes = await response.json();
+        const form = document.getElementById('dynamic-form');
+
+        attributes.forEach(attr => {
+          const formGroup = document.createElement('div');
+          formGroup.className = 'mb-3 col-md-6';
+
+          const label = document.createElement('label');
+          label.className = 'form-label';
+          label.textContent = capitalizeWords(attr.name);
+          formGroup.appendChild(label);
+
+          if (attr.values) {
+            const select = document.createElement('select');
+            select.className = 'form-select';
+            select.name = attr.name;
+
+            attr.values.forEach(value => {
+              const option = document.createElement('option');
+              option.value = value.identifier;
+              option.textContent = capitalizeWords(value.name);
+              // Store the name-identifier mapping
+              if (!attributeMap[attr.name]) attributeMap[attr.name] = {};
+              attributeMap[attr.name][value.identifier] = capitalizeWords(value.name);
+              select.appendChild(option);
+            });
+
+            formGroup.appendChild(select);
+          } else {
+            const input = document.createElement('input');
+            input.type = 'number';
+            input.className = 'form-control';
+            input.name = attr.name;
+            formGroup.appendChild(input);
+          }
+
+          form.appendChild(formGroup);
+        });
+      } catch (error) {
+        console.error('Error fetching attributes:', error);
+      }
+    }
+
+    function submitForm() {
+      document.getElementById('loading-overlay').style.display = 'block';
+
+      const formData = new FormData(document.getElementById('dynamic-form'));
+      const result = {};
+      let counter = 1;
+      formData.forEach((value) => {
+        result[`Attribute${counter}`] = value;
+        counter++;
+      });
+
+      fetch('/predict', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(result)
+      })
+      .then(response => response.json())
+      .then(data => {
+        document.getElementById('loading-overlay').style.display = 'none';
+
+        document.getElementById('verdict').textContent = data.veredict ?? '';
+        document.getElementById('confidence').textContent = data.confidence ? (data.confidence * 100).toFixed(2) + '%' : '';
+
+        const llmOutputContainer = document.getElementById('llm-output-container');
+        if (data.llm_output) {
+          const parsedOutput = JSON.parse(data.llm_output).results[0].outputText;
+          document.getElementById('llm-output').textContent = parsedOutput;
+          llmOutputContainer.style.display = 'block';
+        } else {
+          llmOutputContainer.style.display = 'none';
+        }
+
+        const resultModal = new bootstrap.Modal(document.getElementById('resultModal'));
+        resultModal.show();
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        document.getElementById('loading-overlay').style.display = 'none';
+      });
+    }
+
+    window.onload = fetchAttributes;
+  </script>
+
+  <!-- Full-Screen Spinner Overlay -->
+  <div id="loading-overlay" style="display: none;">
+    <div class="overlay-background"></div>
+    <div class="spinner-container">
+      <div class="spinner-border text-light spinner-xl" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal fade" id="resultModal" tabindex="-1" aria-labelledby="resultModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="resultModalLabel">Prediction Result</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p><strong>Verdict:</strong> <span id="verdict"></span></p>
+          <p><strong>Confidence:</strong> <span id="confidence"></span></p>
+          <div id="llm-output-container">
+            <p><strong>LLM Output:</strong> <span id="llm-output"></span></p>
+          </div>
+        </div>        
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+</html>

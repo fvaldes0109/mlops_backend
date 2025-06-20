@@ -2,6 +2,9 @@ import os
 import requests
 import pandas as pd
 import json
+import random
+from body_models import attributes as ATTRIBUTES_LIST
+from llm import invoke_model
 
 # Helper to build JSON request payload
 def create_tf_serving_json(data):
@@ -24,12 +27,51 @@ def score_model(dataset: pd.DataFrame):
     
     return response.json()
 
-# Predict function to use in FastAPI
 def predict(input_data):
-    df = pd.DataFrame([input_data.dict()])
-
-    for col in df.select_dtypes(include=['object']).columns:
-        df[col] = df[col].astype('category')
     
-    result = score_model(df)
-    return result
+    veredict = random.choice(['approved', 'rejected'])
+    confidence = random.uniform(0.5, 1.0)
+
+    # Map Attribute1..Attribute20 to human-readable list
+    input_dict = input_data.dict()
+    mapped_attributes = []
+    for idx, attr_meta in enumerate(ATTRIBUTES_LIST, start=1):
+        key = f"Attribute{idx}"
+        raw_val = input_dict.get(key)
+        if raw_val is None:
+            continue
+        if attr_meta.values:  # categorical, find name by identifier
+            name_match = next((item.name for item in attr_meta.values if item.identifier == str(raw_val)), str(raw_val))
+            mapped_attributes.append({
+                'attribute': attr_meta.name,
+                'value': name_match
+            })
+        else:
+            # numerical, keep numeric value
+            mapped_attributes.append({
+                'attribute': attr_meta.name,
+                'value': raw_val
+            })
+
+    if veredict == 'rejected':
+        llm_context = {
+            'mapped_attributes': mapped_attributes
+        }
+
+        llm_output = invoke_model(llm_context)
+    else:
+        llm_output = None
+
+    return {
+        'veredict': veredict,
+        'confidence': confidence,
+        'llm_output': llm_output
+    }
+
+    # df = pd.DataFrame([input_data.dict()])
+
+    # for col in df.select_dtypes(include=['object']).columns:
+    #     df[col] = df[col].astype('category')
+    
+    # result = score_model(df)
+    # return result
