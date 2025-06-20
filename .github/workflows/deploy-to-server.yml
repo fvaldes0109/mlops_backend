@@ -48,6 +48,16 @@ jobs:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
 
+      - name: Create environment file on server
+        run: |
+          ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=known_hosts -i id_rsa "${DEPLOY_USER}@${DEPLOY_HOST}" "echo 'DATABRICKS_ENDPOINT=${DATABRICKS_ENDPOINT}' > ${DEPLOY_PATH}/.env && echo 'DATABRICKS_TOKEN=${DATABRICKS_TOKEN}' >> ${DEPLOY_PATH}/.env"
+        env:
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          DATABRICKS_ENDPOINT: ${{ secrets.DATABRICKS_ENDPOINT }}
+          DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+
       - name: Run deployment script on server
         run: |
           ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=known_hosts -i id_rsa "${DEPLOY_USER}@${DEPLOY_HOST}" "chmod +x ${DEPLOY_PATH}/deploy.sh"
