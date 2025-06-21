@@ -17,6 +17,8 @@ Based on the mapped attributes, provide a brief explanation of why the applicati
 Respond in this format:
 Reason: <short explanation>
 Advice: <specific recommendation>
+
+The response should be four to six sentences long.
 </instruction>"""
 
 def invoke_model(context: dict) -> str:
