@@ -1,51 +1,152 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dynamic Form</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Credit Risk Assessment</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
   <style>
+    body {
+      background-color: #ECEFCA;
+      font-family: 'Segoe UI', sans-serif;
+    }
+    .card-section {
+      background: #fff;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+    h1, h2, h3, h4, h5 {
+      color: #213448;
+      font-weight: bold;
+    }
+    .form-label {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #213448;
+    }
+    .form-select, .form-control {
+      border: 1px solid #94B4C1;
+    }
+    .form-select:focus, .form-control:focus {
+      border-color: #547792;
+      box-shadow: 0 0 0 0.2rem rgba(84, 119, 146, 0.25);
+    }
+    .btn-primary {
+      background-color: #213448;
+      border-color: #213448;
+    }
+    .btn-primary:hover {
+      background-color: #547792;
+      border-color: #547792;
+    }
     #loading-overlay {
       position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 1050; /* Above modal backdrop */
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: 1050;
     }
-  
     .overlay-background {
       position: absolute;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0, 0, 0, 0.5); /* Semi-dark background */
+      width: 100%; height: 100%;
+      background-color: rgba(33, 52, 72, 0.5);
     }
-  
     .spinner-container {
       position: absolute;
-      top: 50%;
-      left: 50%;
+      top: 50%; left: 50%;
       transform: translate(-50%, -50%);
     }
-  
     .spinner-xl {
       width: 4rem;
       height: 4rem;
       border-width: 0.4em;
     }
   </style>
-  
-  <div class="container mt-5">
-    <h1 class="mb-4">Credit Risk Assessment</h1>
-    <form id="dynamic-form" class="row"></form>
-    <button class="btn btn-primary mt-3" onclick="submitForm()">Submit</button>
+</head>
+<body>
+  <div class="container py-5">
+    <h2 class="mb-4 text-center">📊 Credit Risk Assessment</h2>
+
+    <!-- ✅ Restore form wrapper -->
+    <form id="dynamic-form">
+      <div id="group-personal" class="card-section">
+        <h5 class="mb-3">Personal Info</h5>
+        <div class="row" id="group-personal-fields"></div>
+      </div>
+      <div id="group-financial" class="card-section">
+        <h5 class="mb-3">Financial Info</h5>
+        <div class="row" id="group-financial-fields"></div>
+      </div>
+      <div id="group-loan" class="card-section">
+        <h5 class="mb-3">Loan Info</h5>
+        <div class="row" id="group-loan-fields"></div>
+      </div>
+      <div id="group-other" class="card-section">
+        <h5 class="mb-3">Other Info</h5>
+        <div class="row" id="group-other-fields"></div>
+      </div>
+
+      <div class="text-center">
+        <button class="btn btn-primary px-4" type="button" onclick="submitForm()">Submit</button>
+      </div>
+    </form>
+  </div>
+
+  <div id="loading-overlay" style="display: none;">
+    <div class="overlay-background"></div>
+    <div class="spinner-container">
+      <div class="spinner-border text-light spinner-xl" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="resultModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Prediction Result</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <p><strong>Verdict:</strong> <span id="verdict"></span></p>
+          <div id="llm-output-container">
+            <p><strong>LLM Output:</strong> <span id="llm-output"></span></p>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script>
     const attributeMap = {};
+
+    const groupMap = {
+      "telephone": "group-personal-fields",
+      "age in years": "group-personal-fields",
+      "personal status and sex": "group-personal-fields",
+      "property": "group-financial-fields",
+      "housing": "group-financial-fields",
+      "savings account/bonds": "group-financial-fields",
+      "other debtors / guarantors": "group-financial-fields",
+      "job": "group-financial-fields",
+      "foreign worker": "group-financial-fields",
+      "purpose": "group-loan-fields",
+      "credit amount": "group-loan-fields",
+      "duration in month": "group-loan-fields",
+      "number of existing credits at this bank": "group-loan-fields",
+      "number of people being liable to provide maintenance for": "group-loan-fields",
+      "status of existing checking account": "group-other-fields",
+      "credit history": "group-other-fields",
+      "installment rate in percentage of disposable income": "group-other-fields",
+      "present employment since": "group-other-fields",
+      "present residence since": "group-other-fields",
+      "other installment plans": "group-other-fields"
+    };
 
     function capitalizeWords(str) {
       return str.replace(/\b\w/g, c => c.toUpperCase());
@@ -55,9 +156,11 @@
       try {
         const response = await fetch('/attributes');
         const attributes = await response.json();
-        const form = document.getElementById('dynamic-form');
 
         attributes.forEach(attr => {
+          const groupId = groupMap[attr.name.toLowerCase()] || "group-other-fields";
+          const groupDiv = document.getElementById(groupId);
+
           const formGroup = document.createElement('div');
           formGroup.className = 'mb-3 col-md-6';
 
@@ -75,7 +178,6 @@
               const option = document.createElement('option');
               option.value = value.identifier;
               option.textContent = capitalizeWords(value.name);
-              // Store the name-identifier mapping
               if (!attributeMap[attr.name]) attributeMap[attr.name] = {};
               attributeMap[attr.name][value.identifier] = capitalizeWords(value.name);
               select.appendChild(option);
@@ -90,7 +192,7 @@
             formGroup.appendChild(input);
           }
 
-          form.appendChild(formGroup);
+          groupDiv.appendChild(formGroup);
         });
       } catch (error) {
         console.error('Error fetching attributes:', error);
@@ -102,10 +204,33 @@
 
       const formData = new FormData(document.getElementById('dynamic-form'));
       const result = {};
-      let counter = 1;
-      formData.forEach((value) => {
-        result[`Attribute${counter}`] = value;
-        counter++;
+
+      const attributeIndexMap = {
+        "status of existing checking account": "Attribute1",
+        "duration in month": "Attribute2",
+        "credit history": "Attribute3",
+        "purpose": "Attribute4",
+        "credit amount": "Attribute5",
+        "savings account/bonds": "Attribute6",
+        "present employment since": "Attribute7",
+        "installment rate in percentage of disposable income": "Attribute8",
+        "personal status and sex": "Attribute9",
+        "other debtors / guarantors": "Attribute10",
+        "present residence since": "Attribute11",
+        "property": "Attribute12",
+        "age in years": "Attribute13",
+        "other installment plans": "Attribute14",
+        "housing": "Attribute15",
+        "number of existing credits at this bank": "Attribute16",
+        "job": "Attribute17",
+        "number of people being liable to provide maintenance for": "Attribute18",
+        "telephone": "Attribute19",
+        "foreign worker": "Attribute20"
+      };
+
+      formData.forEach((value, key) => {
+        const attrKey = attributeIndexMap[key.toLowerCase()];
+        if (attrKey) result[attrKey] = value;
       });
 
       fetch('/predict', {
@@ -118,10 +243,7 @@
       .then(response => response.json())
       .then(data => {
         document.getElementById('loading-overlay').style.display = 'none';
-
         document.getElementById('verdict').textContent = data.veredict ?? '';
-        // document.getElementById('confidence').textContent = data.confidence ? (data.confidence * 100).toFixed(2) + '%' : '';
-
         const llmOutputContainer = document.getElementById('llm-output-container');
         if (data.llm_output) {
           const parsedOutput = JSON.parse(data.llm_output).results[0].outputText;
@@ -130,9 +252,7 @@
         } else {
           llmOutputContainer.style.display = 'none';
         }
-
-        const resultModal = new bootstrap.Modal(document.getElementById('resultModal'));
-        resultModal.show();
+        new bootstrap.Modal(document.getElementById('resultModal')).show();
       })
       .catch(error => {
         console.error('Error:', error);
@@ -143,7 +263,7 @@
     window.onload = fetchAttributes;
   </script>
 
-  <!-- Full-Screen Spinner Overlay -->
+    <!-- Full-Screen Spinner Overlay -->
   <div id="loading-overlay" style="display: none;">
     <div class="overlay-background"></div>
     <div class="spinner-container">
@@ -176,6 +296,5 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
 </body>
 </html>
