@@ -72,6 +72,7 @@ def predict(input_data):
         llm_context = {
             'mapped_attributes': mapped_attributes
         }
+        print(llm_context)
 
         llm_output = invoke_model(llm_context)
     else:
