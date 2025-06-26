@@ -2,7 +2,6 @@ import os
 import requests
 import pandas as pd
 import json
-import random
 from body_models import attributes as ATTRIBUTES_LIST
 from llm import invoke_model
 
@@ -20,7 +19,7 @@ def score_model(dataset: pd.DataFrame):
 
     ds_dict = {'dataframe_split': dataset.to_dict(orient='split')} if isinstance(dataset, pd.DataFrame) else create_tf_serving_json(dataset)
     data_json = json.dumps(ds_dict, allow_nan=True)
-    
+
     response = requests.post(url, headers=headers, data=data_json)
     if response.status_code != 200:
         raise Exception(f'Request failed with status {response.status_code}, {response.text}')
@@ -38,7 +37,7 @@ def predict(input_data):
             continue
         if attr_meta.values:
             # Create a stable mapping from the identifier (e.g. 'A11') to a zero-based integer code
-            id_to_code = {val.identifier: code for code, val in enumerate(attr_meta.values)}
+            id_to_code = {val.identifier: int(val.identifier[-1]) for val in attr_meta.values}
             df[col] = df[col].map(id_to_code).fillna(-1).astype(int)
         else:
             # Ensure numerical attributes are stored as numbers (handling possible string inputs)
@@ -72,7 +71,6 @@ def predict(input_data):
         llm_context = {
             'mapped_attributes': mapped_attributes
         }
-        print(llm_context)
 
         llm_output = invoke_model(llm_context)
     else:
