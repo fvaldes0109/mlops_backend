@@ -57,14 +57,12 @@ def predict(input_data):
         if attr_meta.values:  # categorical, find name by identifier
             name_match = next((item.name for item in attr_meta.values if item.identifier == str(raw_val)), str(raw_val))
             mapped_attributes.append({
-                'attribute': attr_meta.name,
-                'value': name_match
+                attr_meta.name: name_match
             })
         else:
             # numerical, keep numeric value
             mapped_attributes.append({
-                'attribute': attr_meta.name,
-                'value': raw_val
+                attr_meta.name: raw_val
             })
 
     if veredict == 'Rejected':
