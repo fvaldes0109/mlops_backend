@@ -246,8 +246,8 @@
         document.getElementById('verdict').textContent = data.veredict ?? '';
         const llmOutputContainer = document.getElementById('llm-output-container');
         if (data.llm_output) {
-          const parsedOutput = JSON.parse(data.llm_output).results[0].outputText;
-          document.getElementById('llm-output').textContent = parsedOutput;
+          // const parsedOutput = JSON.parse(data.llm_output).results[0].outputText;
+          document.getElementById('llm-output').textContent = data.llm_output;
           llmOutputContainer.style.display = 'block';
         } else {
           llmOutputContainer.style.display = 'none';
